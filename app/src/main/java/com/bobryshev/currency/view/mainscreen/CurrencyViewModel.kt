@@ -10,6 +10,7 @@ import com.bobryshev.domain.usecase.CurrencyRateUseCase
 import com.bobryshev.domain.usecase.GetBalanceUseCase
 import com.bobryshev.domain.usecase.UpdateBalanceUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 @HiltViewModel
@@ -69,9 +70,8 @@ class CurrencyViewModel @Inject constructor(
             val sellValue = uiState.value.sellValue
             val sellRate = uiState.value.sellRate
             var currentBalanceValue = 0.00
-             uiState.value.userBalance.collect {
-                currentBalanceValue = it.find { balance -> balance.rate == sellRate }?.value ?: 0.00
-            }
+
+            uiState.value.userBalance.first()
 
             if (receiveRate.isEmpty() || sellRate.isEmpty() || sellValue == 0.00) {
                 setEffect {

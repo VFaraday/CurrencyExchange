@@ -21,7 +21,7 @@ abstract class BaseViewModel<State: UiState, Effect: UiEffect>: ViewModel() {
     val effect = _effect.receiveAsFlow()
 
     private val handler = CoroutineExceptionHandler { _, throwable ->
-
+        throwable.printStackTrace()
     }
 
     protected fun updateState(block: (currentState: MutableStateFlow<State>) -> Unit) {

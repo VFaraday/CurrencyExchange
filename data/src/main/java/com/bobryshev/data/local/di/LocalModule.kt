@@ -2,11 +2,8 @@ package com.bobryshev.data.local.di
 
 import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.db.SupportSQLiteDatabase
 import com.bobryshev.data.local.DataBase
 import com.bobryshev.data.local.dao.UserDao
-import com.bobryshev.data.local.model.User
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,6 +20,7 @@ object LocalModule {
             context,
             DataBase::class.java,
             "database")
+            .fallbackToDestructiveMigration()
             .build()
     }
 

@@ -17,7 +17,7 @@ class CurrencyViewModel @Inject constructor(
     private val currencyUseCase: CurrencyRateUseCase,
     private val getBalanceUseCase: GetBalanceUseCase,
     private val updateBalanceUseCase: UpdateBalanceUseCase
-): BaseViewModel<CurrencyUiState>() {
+): BaseViewModel<CurrencyUiState, CurrencyUiEffect>() {
 
     override val initalState: CurrencyUiState
         get() = CurrencyUiState()
@@ -65,6 +65,27 @@ class CurrencyViewModel @Inject constructor(
 
     private fun updateUserBalance() {
         launch {
+            val receiveRate = uiState.value.receiveRate
+            val sellValue = uiState.value.sellValue
+            val sellRate = uiState.value.sellRate
+            var currentBalanceValue = 0.00
+             uiState.value.userBalance.collect {
+                currentBalanceValue = it.find { balance -> balance.rate == sellRate }?.value ?: 0.00
+            }
+
+            if (receiveRate.isEmpty() || sellRate.isEmpty() || sellValue == 0.00) {
+                setEffect {
+                    ShowToast("Please select all data")
+                }
+                return@launch
+            }
+
+            if (currentBalanceValue - sellValue < 0.00) {
+                setEffect {
+                    ShowToast("Your balance is not enough")
+                }
+                return@launch
+            }
             updateBalanceUseCase.invoke(Balance(uiState.value.receiveRate, uiState.value.receiveValue))
         }
     }

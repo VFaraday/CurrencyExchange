@@ -2,4 +2,6 @@ package com.bobryshev.currency.base
 
 interface UiIntent
 
-interface UIState
+interface UiState
+
+interface UiEffect

@@ -10,6 +10,9 @@ import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
 class CurrencyActivity: AppCompatActivity() {
+//
+//    @Inject
+//    lateinit var viewModel: CurrencyViewModel
 
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -19,5 +22,15 @@ class CurrencyActivity: AppCompatActivity() {
                 CurrencyScreen()
             }
         }
+
+//        lifecycleScope.launch {
+//            repeatOnLifecycle(Lifecycle.State.STARTED) {
+//                viewModel.effect.collect {
+//                    when(it) {
+//                        is ShowToast -> Toast.makeText(this@CurrencyActivity, it.message, Toast.LENGTH_LONG).show()
+//                    }
+//                }
+//            }
+//        }
     }
 }

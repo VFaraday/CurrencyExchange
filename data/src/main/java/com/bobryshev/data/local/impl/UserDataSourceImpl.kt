@@ -5,7 +5,6 @@ import com.bobryshev.data.local.dao.UserDao
 import com.bobryshev.data.local.model.Balance
 import com.bobryshev.data.local.model.User
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
 class UserDataSourceImpl @Inject constructor(
@@ -13,7 +12,7 @@ class UserDataSourceImpl @Inject constructor(
 ): UserDataSource {
     override suspend fun getUser(): User {
         return userDao.getUser().firstOrNull() ?: let {
-            val user = User(1)
+            val user = User(1, 0)
             userDao.insertUser(user)
             userDao.insertBalance(Balance(1, "EUR", 1000.00))
             user

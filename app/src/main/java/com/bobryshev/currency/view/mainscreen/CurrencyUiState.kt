@@ -1,9 +1,8 @@
 package com.bobryshev.currency.view.mainscreen
 
-import com.bobryshev.currency.base.UIState
+import com.bobryshev.currency.base.UiState
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.model.Rate
-import com.bobryshev.domain.model.UserBalance
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
@@ -14,4 +13,4 @@ data class CurrencyUiState(
     val sellValue: Double = 0.00,
     val sellRate: String = "",
     val receiveRate: String = ""
-): UIState
+): UiState

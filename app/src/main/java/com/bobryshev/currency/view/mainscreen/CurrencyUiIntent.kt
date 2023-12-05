@@ -6,10 +6,10 @@ sealed interface CurrencyUiIntent: UiIntent
 
 data object LoadData: CurrencyUiIntent
 
-data class UpdateSell(val value: Float): CurrencyUiIntent
+data class UpdateSell(val value: Double): CurrencyUiIntent
 
 data class UpdateSellRate(val rate: String): CurrencyUiIntent
 
 data class UpdateReceiveRate(val rate: String): CurrencyUiIntent
 
-data class Exchange(val sellRate: String, val sellValue: Float): CurrencyUiIntent
+data object Exchange: CurrencyUiIntent

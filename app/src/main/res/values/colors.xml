@@ -9,6 +9,7 @@
     <color name="white">#FFFFFFFF</color>
 
     <color name="receive">#0a9e6e</color>
+    <color name="receiveText">#16a373</color>
     <color name="sell">#f05252</color>
     <color name="primary">#009bde</color>
     <color name="colorPrimaryVariant">#017cc2</color>

@@ -32,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -54,12 +55,20 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bobryshev.currency.R
+import com.bobryshev.currency.base.UiIntent
+import com.bobryshev.currency.utils.Constants
+import com.bobryshev.currency.utils.CurrencyAmountInputVisualTransformation
+import com.bobryshev.currency.utils.bitTextStyle
+import com.bobryshev.currency.utils.lightTextStyle
+import com.bobryshev.currency.utils.textStyle
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.model.Rate
 
@@ -79,7 +88,7 @@ fun CurrencyScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Currency converter",
+                        text = stringResource(R.string.currency_converter),
                         modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         color = Color.White
@@ -97,7 +106,12 @@ fun CurrencyScreen(
             .padding(all = 16.dp)) {
             MyBalance(balance)
             Spacer(modifier = Modifier.height(24.dp))
-            CurrencyExchange(balance = balance, rates = uiState.rates)
+            CurrencyExchange(
+                balance = balance,
+                rates = uiState.rates,
+                receiveValue = uiState.receiveValue,
+                viewModel::handleUiEvent
+            )
             Spacer(modifier = Modifier.weight(1f))
             Button(
                 modifier = Modifier
@@ -114,7 +128,7 @@ fun CurrencyScreen(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.Transparent
                 ),
-                onClick = { /*TODO*/ },
+                onClick = { viewModel.handleUiEvent(Exchange) },
             ) {
                 Text(text = "Submit".uppercase())
             }
@@ -125,7 +139,7 @@ fun CurrencyScreen(
 @Composable
 fun MyBalance(list: List<Balance>) {
     Column {
-        Text(text = "My balance".uppercase())
+        Text(text = stringResource(R.string.my_balance).uppercase(), style = lightTextStyle)
         Spacer(modifier = Modifier.height(14.dp))
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -143,24 +157,29 @@ fun MyBalance(list: List<Balance>) {
 @Composable
 fun MyBalanceItem(balance: Balance) {
     Row {
-        Text(text = balance.value.toString())
-        Text(text = balance.rate)
+        Text(text = balance.value.toString(), style = bitTextStyle)
+        Text(text = balance.rate, style = bitTextStyle)
     }
 }
 
 @Composable
-fun CurrencyExchange(balance: List<Balance>, rates: List<Rate>) {
+fun CurrencyExchange(
+    balance: List<Balance>,
+    rates: List<Rate>,
+    receiveValue: Double,
+    onEvent: (UiIntent) -> Unit
+) {
     Column {
-        Text(text = "Currency Exchange".uppercase())
-        Sell(rates = balance.map { it.rate })
+        Text(text = stringResource(R.string.currency_exchange).uppercase(), style = lightTextStyle)
+        Sell(rates = balance.map { it.rate }, onEvent)
         Divider(modifier = Modifier.padding(top = 8.dp, bottom = 16.dp))
-        Receive(rates)
+        Receive(rates, receiveValue, onEvent)
     }
 }
 
 @Composable
-fun Sell(rates: List<String>) {
-    var text by remember { mutableStateOf("0.00") }
+fun Sell(rates: List<String>, onEvent: (UiIntent) -> Unit) {
+    var text by remember { mutableStateOf("") }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
@@ -173,12 +192,17 @@ fun Sell(rates: List<String>) {
                 .size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Sell")
+        Text(text = stringResource(R.string.sell), style = textStyle)
         Spacer(modifier = Modifier.weight(1f))
         TextField(
             value = text,
             onValueChange = {
-                text = it
+                text = if (it.startsWith("0")) {
+                    ""
+                } else {
+                    it
+                }
+                onEvent(UpdateSell(text.toDouble()))
             },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -186,21 +210,25 @@ fun Sell(rates: List<String>) {
                 unfocusedIndicatorColor = Color.White,
                 focusedIndicatorColor = Color.White,
             ),
+            textStyle = textStyle.copy(textAlign = TextAlign.End),
             modifier = Modifier
                 .wrapContentWidth(Alignment.End)
                 .weight(1f),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            visualTransformation = CurrencyAmountInputVisualTransformation(),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.NumberPassword
+            )
         )
         Spacer(modifier = Modifier.width(4.dp))
         Box(modifier = Modifier
             .weight(1f)) {
-            DropdownRate(rates) {}
+            DropdownRate(rates, true) {}
         }
     }
 }
 
 @Composable
-fun Receive(rates: List<Rate>) {
+fun Receive(rates: List<Rate>, receiveValue: Double,  onEvent: (UiIntent) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             painter = painterResource(id = R.drawable.arrow_down),
@@ -212,20 +240,43 @@ fun Receive(rates: List<Rate>) {
                 .size(24.dp)
         )
         Spacer(modifier = Modifier.width(8.dp))
-        Text(text = "Receive")
+        Text(text = stringResource(R.string.receive), style = textStyle)
         Spacer(modifier = Modifier.weight(1f))
-        Text(text = "100.00")
-        Spacer(modifier = Modifier.width(4.dp))
+        Text(
+            text = if(receiveValue.toString().isEmpty() || receiveValue.toString() == "0.0") {
+                receiveValue.toString()
+            } else {
+                "+${receiveValue}"
+            },
+            modifier = Modifier
+                .wrapContentWidth(Alignment.End)
+                .weight(0.5f),
+            maxLines = 1,
+            style = textStyle.copy(
+                color = if (receiveValue.toString().isEmpty() || receiveValue.toString() == "0.0") {
+                    Color.Black
+                } else {
+                    colorResource(id = R.color.receiveText)
+                }
+            )
+            )
+        Spacer(modifier = Modifier.width(4.dp),)
         Box(modifier = Modifier
             .weight(1f)) {
-            DropdownRate(rates.map { it.rateName }) {}
+            DropdownRate(rates.map { it.rateName }, false) {
+                onEvent(UpdateReceiveRate(it))
+            }
         }
     }
 }
 
 @ExperimentalMaterial3Api
 @Composable
-fun DropdownRate(list: List<String>, onClick: () -> Unit) {
+fun DropdownRate(
+    list: List<String>,
+    isSell: Boolean,
+    onClick: (value: String) -> Unit
+) {
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf(list.firstOrNull().orEmpty()) }
 
@@ -251,15 +302,39 @@ fun DropdownRate(list: List<String>, onClick: () -> Unit) {
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            list.forEach { item ->
-                DropdownMenuItem(
-                    text = { Text(text = item) },
-                    onClick = {
-                        selectedText = item
-                        expanded = false
-                    }
-                )
+            if (isSell) {
+                list.firstOrNull { it == Constants.EUR }?.let { text ->
+                    DropdownMenuItem(
+                        text = { Text(text = text) },
+                        onClick = {
+                            selectedText = text
+                            expanded = false
+                        }
+                    )
+                }
+            } else {
+                list.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(text = item) },
+                        onClick = {
+                            selectedText = item
+                            expanded = false
+                            onClick(item)
+                        }
+                    )
+                }
             }
+
+            //TODO:uncomit if back return more rates for sell
+//            list.forEach { item ->
+//                DropdownMenuItem(
+//                    text = { Text(text = item) },
+//                    onClick = {
+//                        selectedText = item
+//                        expanded = false
+//                    }
+//                )
+//            }
         }
     }
 }
@@ -267,17 +342,18 @@ fun DropdownRate(list: List<String>, onClick: () -> Unit) {
 @Preview
 @Composable
 fun MyBalancePreview() {
-    MyBalance(list = listOf(Balance("EUR", 1000.00f), Balance("USD", 0.00f)))
+    MyBalance(list = listOf(Balance(Constants.EUR, 1000.00),
+        Balance("USD", 0.00)))
 }
 
 @Preview
 @Composable
 fun SellPreview() {
-    Sell(emptyList())
+    Sell(emptyList(), {})
 }
 
 @Preview
 @Composable
 fun ReceivePreview() {
-    Receive(emptyList())
+    Receive(emptyList(), 0.00) {}
 }

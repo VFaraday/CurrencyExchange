@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.emptyFlow
 data class CurrencyUiState(
     val rates: List<Rate> = emptyList(),
     val userBalance: Flow<List<Balance>> = emptyFlow(),
-    val receiveValue: Float = 0.00f,
+    val receiveValue: Double = 0.00,
+    val sellValue: Double = 0.00,
     val sellRate: String = "",
     val receiveRate: String = ""
 ): UIState

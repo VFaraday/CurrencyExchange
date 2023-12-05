@@ -15,7 +15,7 @@ class UserDataSourceImpl @Inject constructor(
         return userDao.getUser().firstOrNull() ?: let {
             val user = User(1)
             userDao.insertUser(user)
-            userDao.insertBalance(Balance(1, "EUR", 1000.00f))
+            userDao.insertBalance(Balance(1, "EUR", 1000.00))
             user
         }
     }

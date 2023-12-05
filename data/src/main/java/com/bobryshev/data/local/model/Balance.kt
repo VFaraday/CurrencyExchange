@@ -11,5 +11,5 @@ data class Balance(
     @ColumnInfo(name = "Rate")
     val rate: String,
     @ColumnInfo(name = "BalanceValue")
-    val value: Float
+    val value: Double
 )

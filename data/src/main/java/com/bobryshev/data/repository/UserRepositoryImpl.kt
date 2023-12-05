@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.flatMapConcat
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import kotlin.random.Random
+import com.bobryshev.data.local.model.Balance as BalanceLocal
 
 class UserRepositoryImpl @Inject constructor(
     private val userDataSource: UserDataSource
@@ -20,10 +21,11 @@ class UserRepositoryImpl @Inject constructor(
     }
 
     override suspend fun updateBalance(balance: Balance) {
-        userDataSource.updateBalance(balance = com.bobryshev.data.local.model.Balance(
+        userDataSource.updateBalance(balance = BalanceLocal(
             uid = Random.nextInt(),
             rate = balance.rate,
             value = balance.value
-        ))
+        )
+        )
     }
 }

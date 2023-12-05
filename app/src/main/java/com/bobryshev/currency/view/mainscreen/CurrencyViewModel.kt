@@ -2,6 +2,7 @@ package com.bobryshev.currency.view.mainscreen
 
 import com.bobryshev.currency.base.BaseViewModel
 import com.bobryshev.currency.base.UiIntent
+import com.bobryshev.currency.utils.Util
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.onError
 import com.bobryshev.domain.onSuccess
@@ -27,7 +28,9 @@ class CurrencyViewModel @Inject constructor(
                 loadUserBalance()
                 loadRates()
             }
-            is Exchange -> updateUserBalance(Balance(event.sellRate, event.sellValue))
+            is Exchange -> updateUserBalance()
+            is UpdateSell -> calculateReceive(event.value)
+            is UpdateReceiveRate -> updateReceiveRate(event.rate)
         }
     }
 
@@ -60,13 +63,37 @@ class CurrencyViewModel @Inject constructor(
         }
     }
 
-    private fun updateUserBalance(balance: Balance) {
+    private fun updateUserBalance() {
         launch {
-            updateBalanceUseCase.invoke(balance)
+            updateBalanceUseCase.invoke(Balance(uiState.value.receiveRate, uiState.value.receiveValue))
         }
     }
 
-    private fun calculateReceive() {
+    private fun updateReceiveRate(rate: String) {
+        updateState { state->
+            state.value = state.value.copy(
+                receiveRate = rate
+            )
+        }
+        calculateReceive(uiState.value.sellValue)
+    }
 
+    private fun calculateReceive(value: Double) {
+        updateState { state ->
+            val receiveRate = state.value.receiveRate
+            if (receiveRate.isEmpty()) {
+                state.value = state.value.copy(
+                    sellValue = value,
+                )
+                return@updateState
+            }
+
+            state.value.rates.find { rate -> rate.rateName == receiveRate }?.let {
+                state.value = state.value.copy(
+                    sellValue = value,
+                    receiveValue = Util.roundOffDecimal(value * it.value)
+                )
+            }
+        }
     }
 }

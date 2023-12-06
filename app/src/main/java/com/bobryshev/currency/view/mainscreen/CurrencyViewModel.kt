@@ -1,7 +1,11 @@
 package com.bobryshev.currency.view.mainscreen
 
+import com.bobryshev.currency.R
 import com.bobryshev.currency.base.BaseViewModel
+import com.bobryshev.currency.base.DialogData
 import com.bobryshev.currency.base.UiIntent
+import com.bobryshev.currency.utils.Constants
+import com.bobryshev.currency.utils.StringFormatter
 import com.bobryshev.currency.utils.Util
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.model.User
@@ -15,6 +19,7 @@ import com.bobryshev.domain.usecase.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
 class CurrencyViewModel @Inject constructor(
@@ -40,6 +45,7 @@ class CurrencyViewModel @Inject constructor(
             is Exchange -> updateUserBalance()
             is UpdateSell -> calculateReceive(event.value)
             is UpdateReceiveRate -> updateReceiveRate(event.rate)
+            is UpdateSellRate -> updateSellRate(event.rate)
         }
     }
 
@@ -83,30 +89,70 @@ class CurrencyViewModel @Inject constructor(
             val sellValue = uiState.value.sellValue
             val sellRate = uiState.value.sellRate
 
-            val currentBalanceValue: Double = uiState.value.userBalance.first().firstOrNull {
-                it.rate == sellRate
-            }?.value ?: 0.00
-
             if (receiveRate.isEmpty() || sellRate.isEmpty() || sellValue == 0.00) {
                 setEffect {
-                    ShowToast("Please select all data")
+                    ShowToast(StringFormatter.from(R.string.please_select_all_data))
                 }
                 return@launch
             }
 
-            if (currentBalanceValue - sellValue < 0.00) {
+            val currentBalance = uiState.value.userBalance.first().firstOrNull {
+                it.rate == sellRate
+            } ?: return@launch
+
+            val receiveBalance: Balance? = uiState.value.userBalance.first().firstOrNull {
+                it.rate == receiveRate
+            }
+
+            val currentBalanceValue = currentBalance.value
+
+            val newBalanceValue = if ((user?.countOfExchanges ?: 0) > 5) {
+                (currentBalanceValue - sellValue) - (sellValue * Constants.COMMISSION_FEE)
+            } else {
+                currentBalanceValue - sellValue
+            }
+
+            if (newBalanceValue < 0.00) {
                 setEffect {
-                    ShowToast("Your balance is not enough")
+                    ShowToast(StringFormatter.from(R.string.your_balance_is_not_enough))
                 }
                 return@launch
             }
-            updateBalanceUseCase.invoke(Balance(uiState.value.receiveRate, uiState.value.receiveValue))
+
+            val newBalance = receiveBalance?.copy(
+                value = receiveBalance.value + uiState.value.receiveValue
+            ) ?: Balance(Random.nextInt(), uiState.value.receiveRate, uiState.value.receiveValue)
+            updateBalanceUseCase.invoke(currentBalance.copy(value = newBalanceValue), newBalance)
             user?.let {
                 updateUserUseCase.invoke(it.copy(countOfExchanges = it.countOfExchanges + 1))
             }
-          
+
             setEffect {
-                ShowDialog(title = "Currency converted", message = "You have converted")
+                ShowDialog(
+                    dialogData = DialogData(
+                        title = "Currency converted",
+                        text = "You have converted",
+                        onDismissRequest = {
+                            updateState { state ->
+                                state.value = state.value.copy(
+                                    openAlertDialog = false
+                                )
+                            }
+                        },
+                        onConfirmation = {
+                            updateState { state ->
+                                state.value = state.value.copy(
+                                    openAlertDialog = false
+                                )
+                            }
+                        },
+                    )
+                )
+            }
+            updateState { state ->
+                state.value = state.value.copy(
+                    openAlertDialog = true
+                )
             }
         }
     }
@@ -118,6 +164,14 @@ class CurrencyViewModel @Inject constructor(
             )
         }
         calculateReceive(uiState.value.sellValue)
+    }
+
+    private fun updateSellRate(rate: String) {
+        updateState {  state ->
+            state.value = state.value.copy(
+                sellRate = rate
+            )
+        }
     }
 
     private fun calculateReceive(value: Double) {

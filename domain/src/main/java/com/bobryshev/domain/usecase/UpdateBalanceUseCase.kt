@@ -9,7 +9,7 @@ class UpdateBalanceUseCase @Inject constructor(
     private val userRepository: UserRepository
 ): AbsUseCase() {
 
-    suspend operator fun invoke(balance: Balance) = runOnBackground {
-        userRepository.updateBalance(balance)
+    suspend operator fun invoke(sellBalance: Balance, receiveBalance: Balance) = runOnBackground {
+        userRepository.updateBalance(sellBalance, receiveBalance)
     }
 }

@@ -2,7 +2,10 @@ package com.bobryshev.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.bobryshev.data.local.model.Balance
 import com.bobryshev.data.local.model.User
@@ -17,7 +20,7 @@ interface UserDao {
     @Query("SELECT * FROM balance")
     fun getBalance(): Flow<List<Balance>>
 
-    @Upsert
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertBalance(balance: Balance)
 
     @Upsert
@@ -25,4 +28,10 @@ interface UserDao {
 
     @Delete
     suspend fun delete(user: User)
+
+    @Transaction
+    suspend fun updateBalances(sellBalance: Balance, receiveBalance: Balance) {
+        insertBalance(sellBalance)
+        insertBalance(receiveBalance)
+    }
 }

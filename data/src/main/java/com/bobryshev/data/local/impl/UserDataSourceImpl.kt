@@ -28,7 +28,7 @@ class UserDataSourceImpl @Inject constructor(
         return userDao.getBalance()
     }
 
-    override suspend fun updateBalance(balance: Balance) {
-        userDao.insertBalance(balance)
+    override suspend fun updateBalance(sellBalance: Balance, receiveBalance: Balance) {
+        userDao.updateBalances(sellBalance, receiveBalance)
     }
 }

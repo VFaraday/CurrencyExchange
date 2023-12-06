@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Divider
@@ -30,6 +31,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -56,6 +58,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.bobryshev.currency.R
+import com.bobryshev.currency.base.DialogData
 import com.bobryshev.currency.base.UiIntent
 import com.bobryshev.currency.utils.Constants
 import com.bobryshev.currency.utils.CurrencyAmountInputVisualTransformation
@@ -64,6 +67,7 @@ import com.bobryshev.currency.utils.lightTextStyle
 import com.bobryshev.currency.utils.textStyle
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.model.Rate
+import kotlin.random.Random
 
 @ExperimentalMaterial3Api
 @Composable
@@ -72,14 +76,22 @@ fun CurrencyScreen(
 ) {
 
     val context = LocalContext.current
+    var dialogData: DialogData? = null
 
     val uiState by viewModel.uiState.collectAsState()
     val balance by uiState.userBalance.collectAsState(initial = emptyList())
+
+    val openAlertDialog = remember { mutableStateOf(false) }
+
+    openAlertDialog.value = uiState.openAlertDialog
 
     LaunchedEffect(Unit) {
         viewModel.effect.collect {
             when(it) {
                 is ShowToast -> Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
+                is ShowDialog -> {
+                    dialogData = it.dialogData
+                }
             }
         }
     }
@@ -149,7 +161,7 @@ fun MyBalance(list: List<Balance>) {
         ) {
             items(
                 items = list,
-                key = { it.value }
+                key = { it.id }
             ) {
                 MyBalanceItem(balance = it)
             }
@@ -226,7 +238,9 @@ fun Sell(rates: List<String>, onEvent: (UiIntent) -> Unit) {
         Spacer(modifier = Modifier.width(4.dp))
         Box(modifier = Modifier
             .weight(1f)) {
-            DropdownRate(rates, true) {}
+            DropdownRate(rates, true) {
+                onEvent(UpdateSellRate(it))
+            }
         }
     }
 }
@@ -313,6 +327,7 @@ fun DropdownRate(
                         onClick = {
                             selectedText = text
                             expanded = false
+                            onClick(text)
                         }
                     )
                 }
@@ -346,8 +361,8 @@ fun DropdownRate(
 @Preview
 @Composable
 fun MyBalancePreview() {
-    MyBalance(list = listOf(Balance(Constants.EUR, 1000.00),
-        Balance("USD", 0.00)))
+    MyBalance(list = listOf(Balance(Random.nextInt(), Constants.EUR, 1000.00),
+        Balance(Random.nextInt(), "USD", 0.00)))
 }
 
 @Preview
@@ -360,4 +375,39 @@ fun SellPreview() {
 @Composable
 fun ReceivePreview() {
     Receive(emptyList(), 0.00) {}
+}
+
+@Composable
+fun AlertDialog(
+    dialogData: DialogData
+) {
+    AlertDialog(
+        onDismissRequest = {
+            dialogData.onDismissRequest()
+        },
+        title = dialogData.title?.let {
+            { Text(text = it) }
+        },
+        text = dialogData.text?.let{
+            { Text(text = it) }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    dialogData.onConfirmation()
+                }) {
+                Text(stringResource(id = dialogData.positiveBtnRes))
+            }
+        },
+        dismissButton = {
+            dialogData.negativeBtnRes?.let {
+                TextButton(
+                    onClick = {
+                        dialogData.onDismissRequest()
+                    }) {
+                    Text(stringResource(id = dialogData.negativeBtnRes))
+                }
+            }
+        }
+    )
 }

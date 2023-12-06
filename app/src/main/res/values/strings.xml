@@ -5,4 +5,10 @@
     <string name="my_balance">My balance</string>
     <string name="currency_converter">Currency converter</string>
     <string name="receive">Receive</string>
+    <string name="currency_converted">Currency converted</string>
+    <string name="you_have_converted">You have converted</string>
+    <string name="please_select_all_data">Please select all data</string>
+    <string name="your_balance_is_not_enough">Your balance is not enough</string>
+    <string name="button_ok">Done</string>
+    <string name="button_cancel">Cancel</string>
 </resources>

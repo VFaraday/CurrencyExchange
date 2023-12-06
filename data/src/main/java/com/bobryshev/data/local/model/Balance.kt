@@ -6,7 +6,8 @@ import androidx.room.PrimaryKey
 
 @Entity
 data class Balance(
-    @PrimaryKey(autoGenerate = true)
+    @PrimaryKey
+    @ColumnInfo(name = "id")
     val uid: Int,
     @ColumnInfo(name = "Rate")
     val rate: String,

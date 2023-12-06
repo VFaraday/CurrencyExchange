@@ -12,5 +12,6 @@ data class CurrencyUiState(
     val receiveValue: Double = 0.00,
     val sellValue: Double = 0.00,
     val sellRate: String = "",
-    val receiveRate: String = ""
+    val receiveRate: String = "",
+    val openAlertDialog: Boolean = false
 ): UiState

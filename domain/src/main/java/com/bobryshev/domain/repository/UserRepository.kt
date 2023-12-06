@@ -12,5 +12,5 @@ interface UserRepository {
     )
     suspend fun getBalance(): Flow<List<Balance>>
 
-    suspend fun updateBalance(balance: Balance)
+    suspend fun updateBalance(sellBalance: Balance, receiveBalance: Balance)
 }

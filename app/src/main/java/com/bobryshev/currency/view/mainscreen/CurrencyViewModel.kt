@@ -128,12 +128,21 @@ class CurrencyViewModel @Inject constructor(
             }
 
             updateState { state ->
+                val text = StringFormatter
+                    .from(R.string.converted_message, sellValue.toString(), sellRate, newBalance.value, receiveRate)
                 state.value = state.value.copy(
                     openAlertDialog = true,
                     dialogData = DialogData(
                         title = StringFormatter.from(R.string.currency_converted),
-                        text = StringFormatter
-                            .from(R.string.converted_message, sellValue.toString(), sellRate, newBalance.value, receiveRate),
+                        text = if ((user?.countOfExchanges ?: 0) > 5) {
+                            StringBuilder()
+                                .append(text)
+                                .append(Constants.EMPTY_SPACE)
+                                .append(StringFormatter.from(R.string.commission_fee, Constants.COMMISSION_FEE.toString(), sellRate))
+                                .toString()
+                        } else {
+                            text
+                        },
                         onDismissRequest = {
                             updateState { state ->
                                 state.value = state.value.copy(

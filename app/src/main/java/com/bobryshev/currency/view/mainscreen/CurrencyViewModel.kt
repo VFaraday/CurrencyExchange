@@ -4,11 +4,14 @@ import com.bobryshev.currency.base.BaseViewModel
 import com.bobryshev.currency.base.UiIntent
 import com.bobryshev.currency.utils.Util
 import com.bobryshev.domain.model.Balance
+import com.bobryshev.domain.model.User
 import com.bobryshev.domain.onError
 import com.bobryshev.domain.onSuccess
 import com.bobryshev.domain.usecase.CurrencyRateUseCase
 import com.bobryshev.domain.usecase.GetBalanceUseCase
+import com.bobryshev.domain.usecase.GetUserUseCase
 import com.bobryshev.domain.usecase.UpdateBalanceUseCase
+import com.bobryshev.domain.usecase.UpdateUserUseCase
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import javax.inject.Inject
@@ -17,8 +20,12 @@ import javax.inject.Inject
 class CurrencyViewModel @Inject constructor(
     private val currencyUseCase: CurrencyRateUseCase,
     private val getBalanceUseCase: GetBalanceUseCase,
-    private val updateBalanceUseCase: UpdateBalanceUseCase
+    private val updateBalanceUseCase: UpdateBalanceUseCase,
+    private val getUserUseCase: GetUserUseCase,
+    private val updateUserUseCase: UpdateUserUseCase
 ): BaseViewModel<CurrencyUiState, CurrencyUiEffect>() {
+
+    private var user: User? = null
 
     override val initalState: CurrencyUiState
         get() = CurrencyUiState()
@@ -26,6 +33,7 @@ class CurrencyViewModel @Inject constructor(
     override fun handleUiEvent(event: UiIntent) {
         when(event) {
             LoadData -> {
+                getUser()
                 loadUserBalance()
                 loadRates()
             }
@@ -35,6 +43,11 @@ class CurrencyViewModel @Inject constructor(
         }
     }
 
+    private fun getUser() {
+        launch {
+            user = getUserUseCase.invoke()
+        }
+    }
 
     private fun loadRates() {
         launch {
@@ -69,9 +82,10 @@ class CurrencyViewModel @Inject constructor(
             val receiveRate = uiState.value.receiveRate
             val sellValue = uiState.value.sellValue
             val sellRate = uiState.value.sellRate
-            var currentBalanceValue = 0.00
 
-            uiState.value.userBalance.first()
+            val currentBalanceValue: Double = uiState.value.userBalance.first().firstOrNull {
+                it.rate == sellRate
+            }?.value ?: 0.00
 
             if (receiveRate.isEmpty() || sellRate.isEmpty() || sellValue == 0.00) {
                 setEffect {
@@ -87,6 +101,13 @@ class CurrencyViewModel @Inject constructor(
                 return@launch
             }
             updateBalanceUseCase.invoke(Balance(uiState.value.receiveRate, uiState.value.receiveValue))
+            user?.let {
+                updateUserUseCase.invoke(it.copy(countOfExchanges = it.countOfExchanges + 1))
+            }
+          
+            setEffect {
+                ShowDialog(title = "Currency converted", message = "You have converted")
+            }
         }
     }
 

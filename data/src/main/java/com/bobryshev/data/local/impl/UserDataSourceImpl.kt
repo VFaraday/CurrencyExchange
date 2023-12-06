@@ -19,6 +19,10 @@ class UserDataSourceImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateUser(user: User) {
+        userDao.insertUser(user)
+    }
+
     override suspend fun getBalance(): Flow<List<Balance>> {
         getUser()
         return userDao.getBalance()

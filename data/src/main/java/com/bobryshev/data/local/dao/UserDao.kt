@@ -2,8 +2,6 @@ package com.bobryshev.data.local.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Upsert
 import com.bobryshev.data.local.model.Balance
@@ -22,7 +20,7 @@ interface UserDao {
     @Upsert
     suspend fun insertBalance(balance: Balance)
 
-    @Insert
+    @Upsert
     suspend fun insertUser(user: User)
 
     @Delete

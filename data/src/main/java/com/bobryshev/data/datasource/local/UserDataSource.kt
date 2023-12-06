@@ -8,6 +8,8 @@ interface UserDataSource {
 
     suspend fun getUser(): User
 
+    suspend fun updateUser(user: User)
+
     suspend fun getBalance(): Flow<List<Balance>>
 
     suspend fun updateBalance(balance: Balance)

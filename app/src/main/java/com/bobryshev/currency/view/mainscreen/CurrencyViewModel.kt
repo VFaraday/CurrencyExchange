@@ -120,18 +120,20 @@ class CurrencyViewModel @Inject constructor(
             }
 
             val newBalance = receiveBalance?.copy(
-                value = receiveBalance.value + uiState.value.receiveValue
-            ) ?: Balance(Random.nextInt(), uiState.value.receiveRate, uiState.value.receiveValue)
-            updateBalanceUseCase.invoke(currentBalance.copy(value = newBalanceValue), newBalance)
+                value = Util.roundOffDecimal(receiveBalance.value + uiState.value.receiveValue)
+            ) ?: Balance(Random.nextInt(), uiState.value.receiveRate, Util.roundOffDecimal(uiState.value.receiveValue))
+            updateBalanceUseCase.invoke(currentBalance.copy(value = Util.roundOffDecimal(newBalanceValue)), newBalance)
             user?.let {
                 updateUserUseCase.invoke(it.copy(countOfExchanges = it.countOfExchanges + 1))
             }
 
-            setEffect {
-                ShowDialog(
+            updateState { state ->
+                state.value = state.value.copy(
+                    openAlertDialog = true,
                     dialogData = DialogData(
-                        title = "Currency converted",
-                        text = "You have converted",
+                        title = StringFormatter.from(R.string.currency_converted),
+                        text = StringFormatter
+                            .from(R.string.converted_message, sellValue.toString(), sellRate, newBalance.value, receiveRate),
                         onDismissRequest = {
                             updateState { state ->
                                 state.value = state.value.copy(
@@ -147,11 +149,6 @@ class CurrencyViewModel @Inject constructor(
                             }
                         },
                     )
-                )
-            }
-            updateState { state ->
-                state.value = state.value.copy(
-                    openAlertDialog = true
                 )
             }
         }

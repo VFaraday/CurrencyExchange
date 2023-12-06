@@ -15,5 +15,5 @@ data class DialogData(
     val onDismissRequest: () -> Unit,
     val onConfirmation: () -> Unit,
     @StringRes val positiveBtnRes: Int = R.string.button_ok,
-    @StringRes val negativeBtnRes: Int? = R.string.button_cancel,
+    @StringRes val negativeBtnRes: Int? = null,
 )

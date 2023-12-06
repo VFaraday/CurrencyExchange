@@ -14,6 +14,11 @@ object StringFormatter {
     fun from(@StringRes id: Int): String =
         resources.getString(id)
 
+    fun from(@StringRes formatter: Int, vararg args: Any): String =
+        resources.getString(formatter, *args)
+
+    fun from(@StringRes formatter: Int, vararg args: String): String =
+        resources.getString(formatter, *args)
 
 
 }

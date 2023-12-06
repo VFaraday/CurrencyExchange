@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -89,9 +90,6 @@ fun CurrencyScreen(
         viewModel.effect.collect {
             when(it) {
                 is ShowToast -> Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
-                is ShowDialog -> {
-                    dialogData = it.dialogData
-                }
             }
         }
     }
@@ -116,6 +114,11 @@ fun CurrencyScreen(
             )
         }
     ) {
+        if (openAlertDialog.value) {
+            uiState.dialogData?.let { dialog ->
+                AlertDialog(dialogData = dialog)
+            }
+        }
         Column(modifier = Modifier
             .padding(it)
             .padding(all = 16.dp)) {
@@ -196,6 +199,7 @@ fun CurrencyExchange(
 @Composable
 fun Sell(rates: List<String>, onEvent: (UiIntent) -> Unit) {
     var text by remember { mutableStateOf("") }
+    val visualTransformation = CurrencyAmountInputVisualTransformation()
 
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
@@ -218,7 +222,15 @@ fun Sell(rates: List<String>, onEvent: (UiIntent) -> Unit) {
                 } else {
                     it
                 }
-                onEvent(UpdateSell(text.toDouble()))
+                onEvent(
+                    UpdateSell(
+                        visualTransformation
+                            .filter(AnnotatedString(text)
+                            )
+                            .text
+                            .text.toDouble()
+                    )
+                )
             },
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = Color.Transparent,
@@ -230,7 +242,7 @@ fun Sell(rates: List<String>, onEvent: (UiIntent) -> Unit) {
             modifier = Modifier
                 .wrapContentWidth(Alignment.End)
                 .weight(1f),
-            visualTransformation = CurrencyAmountInputVisualTransformation(),
+            visualTransformation = visualTransformation,
             keyboardOptions = KeyboardOptions(
                 keyboardType = KeyboardType.NumberPassword
             )

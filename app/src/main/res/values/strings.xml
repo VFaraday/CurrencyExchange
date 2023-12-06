@@ -11,4 +11,5 @@
     <string name="your_balance_is_not_enough">Your balance is not enough</string>
     <string name="button_ok">Done</string>
     <string name="button_cancel">Cancel</string>
+    <string name="converted_message">You have converted %s %s to %s %s</string>
 </resources>

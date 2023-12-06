@@ -1,5 +1,6 @@
 package com.bobryshev.currency.view.mainscreen
 
+import com.bobryshev.currency.base.DialogData
 import com.bobryshev.currency.base.UiState
 import com.bobryshev.domain.model.Balance
 import com.bobryshev.domain.model.Rate
@@ -13,5 +14,6 @@ data class CurrencyUiState(
     val sellValue: Double = 0.00,
     val sellRate: String = "",
     val receiveRate: String = "",
-    val openAlertDialog: Boolean = false
+    val openAlertDialog: Boolean = false,
+    val dialogData: DialogData? = null
 ): UiState
